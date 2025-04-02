@@ -8,20 +8,28 @@
 import Foundation
 
 class SalesEntryViewModel: ObservableObject {
-    // MARK: - Form Fields
+    // MARK: - Customer Fields
+    @Published var customerContact: String = "" {
+        didSet {
+            autoPopulateCustomer()
+        }
+    }
     @Published var customerName: String = ""
-    @Published var customerContact: String = ""
 
+    // MARK: - New Product Fields
     @Published var productName: String = ""
     @Published var productPrice: String = ""
     @Published var selectedSize: String = "XL"
 
+    // MARK: - Added Products
     @Published var products: [Product] = []
+
+    // MARK: - Toast
     @Published var saleSaved: Bool = false
 
-    // MARK: - Editing Existing Sale
     private var existingSale: Sale?
     private let addSaleUseCase: AddSaleUseCase
+    private let repo: LocalSalesRepository
 
     var isEditing: Bool {
         existingSale != nil
@@ -30,25 +38,39 @@ class SalesEntryViewModel: ObservableObject {
     // MARK: - Init
     init(addSaleUseCase: AddSaleUseCase, editing sale: Sale? = nil) {
         self.addSaleUseCase = addSaleUseCase
+        self.repo = addSaleUseCase.repository as! LocalSalesRepository
         self.existingSale = sale
 
         if let sale = sale {
             self.customerName = sale.customer.name
             self.customerContact = sale.customer.contact
 
-            // Reuse existing product IDs or assign new ones safely
-            self.products = sale.products.map { product in
+            self.products = sale.products.map {
                 Product(
-                    id: product.id.isEmpty ? UUID().uuidString : product.id,
-                    name: product.name,
-                    price: product.price,
-                    size: product.size
+                    id: $0.id.isEmpty ? UUID().uuidString : $0.id,
+                    name: $0.name,
+                    price: $0.price,
+                    size: $0.size
                 )
             }
         }
     }
 
-    // MARK: - Add Product
+    // MARK: - Auto-fill Customer Name by Contact
+    private func autoPopulateCustomer() {
+        let trimmed = customerContact.filter { $0.isNumber }
+
+        guard trimmed.count == 10 else {
+            customerName = ""
+            return
+        }
+
+        if let existing = repo.customers.first(where: { $0.contact == trimmed }) {
+            customerName = existing.name
+        }
+    }
+
+    // MARK: - Add New Product
     func addProduct() {
         let trimmedName = productName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty,
@@ -62,7 +84,7 @@ class SalesEntryViewModel: ObservableObject {
             size: selectedSize
         )
 
-        products = products + [newProduct] // force SwiftUI update
+        products = products + [newProduct]
 
         productName = ""
         productPrice = ""
@@ -71,12 +93,16 @@ class SalesEntryViewModel: ObservableObject {
 
     // MARK: - Save or Update Sale
     func saveSale() {
-        guard !customerName.isEmpty,
-              !customerContact.isEmpty,
+        guard !customerContact.isEmpty,
+              !customerName.isEmpty,
               !products.isEmpty else { return }
 
+        let customerId = existingSale?.customer.id ??
+            repo.customers.first(where: { $0.contact == customerContact })?.id ??
+            UUID().uuidString
+
         let customer = Customer(
-            id: existingSale?.customer.id ?? UUID().uuidString,
+            id: customerId,
             name: customerName,
             contact: customerContact
         )
@@ -93,11 +119,10 @@ class SalesEntryViewModel: ObservableObject {
         addSaleUseCase.execute(customer: customer, products: products, overrideId: saleId)
 
         saleSaved = true
-
-        // Hide toast after 1.5 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             self.saleSaved = false
         }
     }
 }
+
 

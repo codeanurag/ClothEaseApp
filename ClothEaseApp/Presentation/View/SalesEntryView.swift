@@ -18,15 +18,13 @@ struct SalesEntryView: View {
             VStack(spacing: 0) {
                 Form {
                     // MARK: Customer Section
-                    Section(header: Text("Customer Details")) {
-                        TextField("Name", text: $viewModel.customerName)
-
-                        TextField("Contact Number", text: $viewModel.customerContact)
-                            .keyboardType(.numberPad)
-                            .onChange(of: viewModel.customerContact) { newValue in
-                                let filtered = newValue.filter { $0.isNumber }
-                                viewModel.customerContact = String(filtered.prefix(10))
-                            }
+                    Section {
+                        CustomerCardView(
+                            contact: $viewModel.customerContact,
+                            name: $viewModel.customerName,
+                            isEditable: true,
+                            title: "Customer Details"
+                        )
                     }
 
                     // MARK: Product Cards (Editable)

@@ -9,7 +9,7 @@
 import Foundation
 
 class AddSaleUseCase {
-    private let repository: SalesRepository
+    let repository: SalesRepository
 
     init(repository: SalesRepository) {
         self.repository = repository

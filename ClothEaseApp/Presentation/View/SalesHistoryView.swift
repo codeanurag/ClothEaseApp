@@ -16,6 +16,7 @@ struct SalesHistoryView: View {
                 LazyVStack(spacing: 16) {
                     ForEach(viewModel.filteredSales, id: \.id) { sale in
                         VStack(alignment: .leading, spacing: 8) {
+                            // Header: Customer name and Edit icon
                             HStack {
                                 Text(sale.customer.name)
                                     .font(.headline)
@@ -36,10 +37,12 @@ struct SalesHistoryView: View {
                                 }
                             }
 
+                            // Product names
                             Text("📦 \(sale.products.map { $0.name }.joined(separator: ", "))")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
 
+                            // Timestamp
                             Text("🕒 \(formattedDate(sale.timestamp))")
                                 .font(.caption)
                                 .foregroundColor(.gray)
@@ -57,14 +60,7 @@ struct SalesHistoryView: View {
             .searchable(text: $viewModel.searchText)
             .navigationTitle("Sales History")
             .onAppear {
-                let ids = viewModel.filteredSales.map { $0.id }
-                let duplicateIDs = Dictionary(grouping: ids, by: { $0 })
-                    .filter { $1.count > 1 }
-                    .keys
-
-                if !duplicateIDs.isEmpty {
-                    print("⚠️ Duplicate Sale IDs found: \(duplicateIDs)")
-                }
+                debugDuplicateIDs()
             }
         }
     }
@@ -75,6 +71,16 @@ struct SalesHistoryView: View {
         formatter.timeStyle = .short
         return formatter.string(from: date)
     }
-}
 
+    private func debugDuplicateIDs() {
+        let ids = viewModel.filteredSales.map { $0.id }
+        let duplicateIDs = Dictionary(grouping: ids, by: { $0 })
+            .filter { $1.count > 1 }
+            .keys
+
+        if !duplicateIDs.isEmpty {
+            print("⚠️ Duplicate Sale IDs found: \(duplicateIDs)")
+        }
+    }
+}
 

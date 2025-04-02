@@ -12,7 +12,7 @@ class CustomerListViewModel: ObservableObject {
     @Published var searchText: String = ""
     @Published var allCustomers: [Customer] = []
 
-    private var repository: LocalSalesRepository
+    var repository: LocalSalesRepository
     private var cancellables = Set<AnyCancellable>()
 
     init(repository: LocalSalesRepository) {

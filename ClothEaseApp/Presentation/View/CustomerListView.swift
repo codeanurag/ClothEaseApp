@@ -15,15 +15,21 @@ struct CustomerListView: View {
         NavigationStack {
             List {
                 ForEach(viewModel.filteredCustomers) { customer in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(customer.name).font(.headline)
-                        Text("📞 \(customer.contact)")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                        Text("🛍️ Purchases: \(viewModel.saleCount(for: customer))")
-                            .font(.caption)
+                    NavigationLink(
+                        destination: EditCustomerView(
+                            name: customer.name,
+                            contact: customer.contact,
+                            customerId: customer.id,
+                            repo: viewModel.repository
+                        )
+                    ) {
+                        CustomerCardView(
+                            contact: .constant(customer.contact),
+                            name: .constant(customer.name),
+                            isEditable: false
+                        )
                     }
-                    .padding(.vertical, 4)
+
                 }
             }
             .searchable(text: $viewModel.searchText)

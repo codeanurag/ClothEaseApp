@@ -20,22 +20,58 @@ class LocalSalesRepository: SalesRepository, ObservableObject {
     }
 
     func addSale(_ sale: Sale) {
+        // 1. Add or replace the sale
         if let index = sales.firstIndex(where: { $0.id == sale.id }) {
             sales[index] = sale
         } else {
             sales.append(sale)
         }
-
-        // ✅ Update customer if ID exists, else add new
-        if let existingIndex = customers.firstIndex(where: { $0.id == sale.customer.id }) {
-            customers[existingIndex] = sale.customer
+        
+        // 2. Update or add customer in customer list
+        if let customerIndex = customers.firstIndex(where: { $0.id == sale.customer.id }) {
+            customers[customerIndex] = sale.customer
         } else {
             customers.append(sale.customer)
         }
-
+        
+        // 3. ✅ Update the customer info in all other sales with same customer ID
+        for i in sales.indices {
+            if sales[i].customer.id == sale.customer.id {
+                sales[i] = Sale(
+                    id: sales[i].id,
+                    customer: sale.customer,
+                    products: sales[i].products,
+                    timestamp: sales[i].timestamp
+                )
+            }
+        }
+        
         saveSales()
         saveCustomers()
     }
+
+    func updateCustomerEverywhere(updatedCustomer: Customer) {
+        // 1. Update in customer list
+        if let index = customers.firstIndex(where: { $0.id == updatedCustomer.id }) {
+            customers[index] = updatedCustomer
+        }
+        
+        // 2. Update in sales list
+        for i in sales.indices {
+            if sales[i].customer.id == updatedCustomer.id {
+                let updatedSale = Sale(
+                    id: sales[i].id,
+                    customer: updatedCustomer,
+                    products: sales[i].products,
+                    timestamp: sales[i].timestamp
+                )
+                sales[i] = updatedSale
+            }
+        }
+        
+        saveAll()
+    }
+
 
 
 
