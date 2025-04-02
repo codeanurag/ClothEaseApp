@@ -9,6 +9,8 @@
 import SwiftUI
 
 struct HomeTabView: View {
+    let repo: LocalSalesRepository
+
     var body: some View {
         NavigationStack {
             VStack {
@@ -20,7 +22,13 @@ struct HomeTabView: View {
             .navigationTitle("Home")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink(destination: SalesEntryView()) {
+                    NavigationLink(
+                        destination: SalesEntryView(
+                            viewModel: SalesEntryViewModel(
+                                addSaleUseCase: AddSaleUseCase(repository: repo)
+                            )
+                        )
+                    ) {
                         Image(systemName: "plus.circle")
                             .font(.title2)
                     }
@@ -29,3 +37,5 @@ struct HomeTabView: View {
         }
     }
 }
+
+
