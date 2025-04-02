@@ -8,67 +8,43 @@
 import SwiftUI
 
 struct SetPasscodeView: View {
-    @AppStorage("userPasscode") private var storedPasscode: String = ""
-    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
     @State private var passcode: String = ""
-    @State private var confirmPasscode: String = ""
-    @State private var showConfirmField = false
-    @State private var showError = false
     @FocusState private var isFocused: Bool
 
     var onSuccess: () -> Void
 
     var body: some View {
         VStack(spacing: 30) {
-            Text(showConfirmField ? "Confirm Passcode" : "Set Passcode")
+            Text("Set Passcode")
                 .font(.title2)
                 .bold()
 
-            SecureDotsView(code: showConfirmField ? confirmPasscode : passcode)
+            SecureDotsView(code: passcode)
 
-            SecureField("", text: showConfirmField ? $confirmPasscode : $passcode)
+            SecureField("", text: $passcode)
                 .keyboardType(.numberPad)
                 .focused($isFocused)
-                .onChange(of: showConfirmField ? confirmPasscode : passcode) {
-                    handleTyping()
+                .onChange(of: passcode) { _ in
+                    if passcode.count == 4 {
+                        // Navigate to confirmation
+                        isFocused = false
+                    }
                 }
-                .frame(width: 0, height: 0) // invisible but keeps keyboard alive
                 .opacity(0)
+                .frame(width: 0, height: 0)
 
-            if showError {
-                Text("Passcodes must match and be 4 digits.")
-                    .foregroundColor(.red)
-                    .font(.caption)
-            }
+            NavigationLink(
+                destination: ConfirmPasscodeView(passcode: passcode, onSuccess: onSuccess),
+                isActive: .constant(passcode.count == 4),
+                label: {
+                    EmptyView()
+                }
+            )
 
             Spacer()
         }
         .padding()
-        .onAppear {
-            isFocused = true
-        }
-    }
-
-    private func handleTyping() {
-        if !showConfirmField && passcode.count == 4 {
-            showConfirmField = true
-            isFocused = true
-        } else if showConfirmField && confirmPasscode.count == 4 {
-            validatePasscode()
-        }
-    }
-
-    private func validatePasscode() {
-        guard passcode == confirmPasscode else {
-            showError = true
-            confirmPasscode = ""
-            return
-        }
-
-        storedPasscode = passcode
-        hasCompletedOnboarding = true
-        onSuccess()
+        .onAppear { isFocused = true }
     }
 }
-
 

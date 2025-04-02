@@ -14,63 +14,104 @@ struct SalesEntryView: View {
     @State private var customerContact = ""
     @State private var productName = ""
     @State private var productPrice = ""
-    @State private var productSize = ""
+    @State private var selectedSize = "XL"
     @State private var products: [Product] = []
     @State private var showAlert = false
 
+    let sizes = ["S", "M", "L", "XL", "XXL", "XXXL"]
+
     var body: some View {
-        Form {
-            Section(header: Text("Customer Details")) {
-                TextField("Name", text: $customerName)
-                TextField("Contact Number", text: $customerContact)
-                    .keyboardType(.phonePad)
-            }
+        NavigationStack {
+            VStack(spacing: 0) {
+                Form {
+                    // Customer Section
+                    Section(header: Text("Customer Details")) {
+                        TextField("Name", text: $customerName)
 
-            Section(header: Text("Product Details")) {
-                TextField("Product Name", text: $productName)
-                TextField("Price", text: $productPrice)
-                    .keyboardType(.decimalPad)
-                TextField("Size", text: $productSize)
+                        TextField("Contact Number", text: $customerContact)
+                            .keyboardType(.numberPad)
+                    }
 
-                Button("Add Product") {
-                    addProduct()
-                }
-            }
+                    // Product Section
+                    Section(header: Text("Product Details")) {
+                        TextField("Product Name", text: $productName)
 
-            if !products.isEmpty {
-                Section(header: Text("Products Added")) {
-                    ForEach(products) { product in
-                        VStack(alignment: .leading) {
-                            Text(product.name)
-                            Text("₹\(product.price, specifier: "%.2f") • Size: \(product.size)")
-                                .font(.caption)
-                                .foregroundColor(.gray)
+                        TextField("Price", text: $productPrice)
+                            .keyboardType(.decimalPad)
+
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Select Size")
+                                .font(.subheadline)
+
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 10) {
+                                    ForEach(sizes, id: \.self) { size in
+                                        Button(action: {
+                                            selectedSize = size
+                                        }) {
+                                            Text(size)
+                                                .padding(.horizontal, 12)
+                                                .padding(.vertical, 8)
+                                                .background(selectedSize == size ? Color.blue : Color.gray.opacity(0.2))
+                                                .foregroundColor(selectedSize == size ? .white : .primary)
+                                                .cornerRadius(8)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Button("Add Product") {
+                            addProduct()
+                        }
+                        .padding(.top, 8)
+                    }
+
+                    // Products Added Section
+                    if !products.isEmpty {
+                        Section(header: Text("Products Added")) {
+                            ForEach(products) { product in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(product.name)
+                                    Text("₹\(product.price, specifier: "%.2f") • Size: \(product.size)")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                            }
                         }
                     }
                 }
-            }
 
-            Button("Save Sale") {
-                saveSale()
+                // Save Sale Button (Fixed at bottom)
+                Button(action: saveSale) {
+                    Text("Save Sale")
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                        .padding(.horizontal)
+                }
+                .padding(.bottom, 8)
+                .alert("Sale Saved", isPresented: $showAlert) {
+                    Button("OK", role: .cancel) { }
+                }
             }
-        }
-        .navigationTitle("New Sale")
-        .alert(isPresented: $showAlert) {
-            Alert(title: Text("Success"), message: Text("Sale saved!"), dismissButton: .default(Text("OK")))
+            .navigationTitle("New Sale")
         }
     }
 
     private func addProduct() {
         guard !productName.isEmpty,
-              let price = Double(productPrice),
-              !productSize.isEmpty else { return }
+              let price = Double(productPrice) else { return }
 
-        let product = Product(id: UUID().uuidString, name: productName, price: price, size: productSize)
+        let product = Product(id: UUID().uuidString, name: productName, price: price, size: selectedSize)
         products.append(product)
 
         productName = ""
         productPrice = ""
-        productSize = ""
+        selectedSize = "XL"
     }
 
     private func saveSale() {
@@ -85,3 +126,4 @@ struct SalesEntryView: View {
         showAlert = true
     }
 }
+
