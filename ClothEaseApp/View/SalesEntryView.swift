@@ -30,6 +30,12 @@ struct SalesEntryView: View {
 
                         TextField("Contact Number", text: $customerContact)
                             .keyboardType(.numberPad)
+                            .onChange(of: customerContact) { newValue in
+                                // Remove non-digits and limit to 10
+                                let filtered = newValue.filter { $0.isNumber }
+                                customerContact = String(filtered.prefix(10))
+                            }
+
                     }
 
                     // Product Section
@@ -93,7 +99,7 @@ struct SalesEntryView: View {
                         .cornerRadius(12)
                         .padding(.horizontal)
                 }
-                .padding(.bottom, 8)
+                .padding(.bottom, 16)
                 .alert("Sale Saved", isPresented: $showAlert) {
                     Button("OK", role: .cancel) { }
                 }
