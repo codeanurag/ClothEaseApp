@@ -5,44 +5,99 @@
 //  Created by Anurag Pandit on 02/04/25.
 //
 
-
 import Foundation
 
 class SalesEntryViewModel: ObservableObject {
-    @Published var customerName = ""
-    @Published var customerContact = ""
-    @Published var productName = ""
-    @Published var productPrice = ""
-    @Published var selectedSize = "XL"
-    @Published var products: [Product] = []
-    @Published var saleSaved = false
+    // MARK: - Form Fields
+    @Published var customerName: String = ""
+    @Published var customerContact: String = ""
 
+    @Published var productName: String = ""
+    @Published var productPrice: String = ""
+    @Published var selectedSize: String = "XL"
+
+    @Published var products: [Product] = []
+    @Published var saleSaved: Bool = false
+
+    // MARK: - Editing Existing Sale
+    private var existingSale: Sale?
     private let addSaleUseCase: AddSaleUseCase
 
-    init(addSaleUseCase: AddSaleUseCase) {
-        self.addSaleUseCase = addSaleUseCase
+    var isEditing: Bool {
+        existingSale != nil
     }
 
-    func addProduct() {
-        guard !productName.isEmpty, let price = Double(productPrice) else { return }
+    // MARK: - Init
+    init(addSaleUseCase: AddSaleUseCase, editing sale: Sale? = nil) {
+        self.addSaleUseCase = addSaleUseCase
+        self.existingSale = sale
 
-        let product = Product(id: UUID().uuidString, name: productName, price: price, size: selectedSize)
-        products.append(product)
+        if let sale = sale {
+            self.customerName = sale.customer.name
+            self.customerContact = sale.customer.contact
+
+            // Reuse existing product IDs or assign new ones safely
+            self.products = sale.products.map { product in
+                Product(
+                    id: product.id.isEmpty ? UUID().uuidString : product.id,
+                    name: product.name,
+                    price: product.price,
+                    size: product.size
+                )
+            }
+        }
+    }
+
+    // MARK: - Add Product
+    func addProduct() {
+        let trimmedName = productName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty,
+              let price = Double(productPrice),
+              price > 0 else { return }
+
+        let newProduct = Product(
+            id: UUID().uuidString,
+            name: trimmedName,
+            price: price,
+            size: selectedSize
+        )
+
+        products = products + [newProduct] // force SwiftUI update
 
         productName = ""
         productPrice = ""
         selectedSize = "XL"
     }
 
+    // MARK: - Save or Update Sale
     func saveSale() {
-        guard !customerName.isEmpty, !customerContact.isEmpty, !products.isEmpty else { return }
+        guard !customerName.isEmpty,
+              !customerContact.isEmpty,
+              !products.isEmpty else { return }
 
-        let customer = Customer(id: UUID().uuidString, name: customerName, contact: customerContact)
-        addSaleUseCase.execute(customer: customer, products: products)
+        let customer = Customer(
+            id: existingSale?.customer.id ?? UUID().uuidString,
+            name: customerName,
+            contact: customerContact
+        )
 
-        customerName = ""
-        customerContact = ""
-        products = []
+        let saleId = existingSale?.id ?? UUID().uuidString
+
+        let newSale = Sale(
+            id: saleId,
+            customer: customer,
+            products: products,
+            timestamp: Date()
+        )
+
+        addSaleUseCase.execute(customer: customer, products: products, overrideId: saleId)
+
         saleSaved = true
+
+        // Hide toast after 1.5 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            self.saleSaved = false
+        }
     }
 }
+

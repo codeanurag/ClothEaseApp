@@ -5,20 +5,22 @@
 //  Created by Anurag Pandit on 02/04/25.
 //
 
-
 import SwiftUI
 
 struct SalesEntryView: View {
     @StateObject var viewModel: SalesEntryViewModel
+    @Environment(\.dismiss) var dismiss
 
     let sizes = ["S", "M", "L", "XL", "XXL", "XXXL"]
 
     var body: some View {
         NavigationStack {
-            VStack {
+            VStack(spacing: 0) {
                 Form {
+                    // MARK: Customer Section
                     Section(header: Text("Customer Details")) {
                         TextField("Name", text: $viewModel.customerName)
+
                         TextField("Contact Number", text: $viewModel.customerContact)
                             .keyboardType(.numberPad)
                             .onChange(of: viewModel.customerContact) { newValue in
@@ -27,14 +29,29 @@ struct SalesEntryView: View {
                             }
                     }
 
-                    Section(header: Text("Product Details")) {
+                    // MARK: Product Cards (Editable)
+                    if !viewModel.products.isEmpty {
+                        Section(header: Text("Products")) {
+                            ForEach($viewModel.products, id: \.id) { $product in
+                                ProductCardView(
+                                    product: $product,
+                                    sizes: sizes,
+                                    isEditable: true
+                                )
+                                .padding(.vertical, 4)
+                            }
+                        }
+                    }
+
+                    // MARK: Add New Product Section
+                    Section(header: Text("Add Product")) {
                         TextField("Product Name", text: $viewModel.productName)
+
                         TextField("Price", text: $viewModel.productPrice)
                             .keyboardType(.decimalPad)
 
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("Select Size")
-                                .font(.subheadline)
+                            Text("Select Size").font(.subheadline)
 
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 10) {
@@ -54,29 +71,21 @@ struct SalesEntryView: View {
                             }
                         }
 
-
                         Button("Add Product") {
                             viewModel.addProduct()
                         }
-                    }
-
-                    if !viewModel.products.isEmpty {
-                        Section(header: Text("Products Added")) {
-                            ForEach(viewModel.products) { product in
-                                VStack(alignment: .leading) {
-                                    Text(product.name)
-                                    Text("₹\(product.price, specifier: "%.2f") • Size: \(product.size)")
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
-                                }
-                            }
-                        }
+                        .padding(.top, 6)
                     }
                 }
 
-                Button("Save Sale") {
+                // MARK: Save/Update Button
+                Button(viewModel.isEditing ? "Update Sale" : "Save Sale") {
                     viewModel.saveSale()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        dismiss()
+                    }
                 }
+                .fontWeight(.semibold)
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(Color.blue)
@@ -84,13 +93,10 @@ struct SalesEntryView: View {
                 .cornerRadius(12)
                 .padding(.horizontal)
                 .padding(.bottom, 8)
-                .alert("Sale Saved!", isPresented: $viewModel.saleSaved) {
-                    Button("OK", role: .cancel) { }
-                }
             }
-            .navigationTitle("New Sale")
+            .navigationTitle(viewModel.isEditing ? "Edit Sale" : "New Sale")
+            .toast(message: viewModel.isEditing ? "Sale Updated" : "Sale Saved",
+                   isShowing: $viewModel.saleSaved)
         }
     }
 }
-
-

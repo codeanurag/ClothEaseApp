@@ -19,4 +19,14 @@ class AddSaleUseCase {
         let sale = Sale(id: UUID().uuidString, customer: customer, products: products, timestamp: Date())
         repository.addSale(sale)
     }
+    func execute(customer: Customer, products: [Product], overrideId: String? = nil) {
+        let sale = Sale(
+            id: overrideId ?? UUID().uuidString,
+            customer: customer,
+            products: products,
+            timestamp: Date()
+        )
+        repository.addSale(sale)
+    }
+
 }

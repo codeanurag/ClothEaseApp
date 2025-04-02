@@ -6,9 +6,9 @@
 //
 
 
-struct Product: Identifiable, Codable {
+struct Product: Identifiable, Codable, Equatable {
     let id: String
-    let name: String
-    let price: Double
-    let size: String
+    var name: String
+    var price: Double
+    var size: String
 }

@@ -12,21 +12,32 @@ class LocalSalesRepository: SalesRepository, ObservableObject {
     private let salesKey = "saved_sales"
     private let customersKey = "saved_customers"
 
-    @Published private(set) var sales: [Sale] = []
-    @Published private(set) var customers: [Customer] = []
+    @Published var sales: [Sale] = []
+    @Published var customers: [Customer] = []
     init() {
         loadSales()
         loadCustomers()
     }
 
     func addSale(_ sale: Sale) {
-        sales.append(sale)
-        if !customers.contains(where: { $0.id == sale.customer.id }) {
+        if let index = sales.firstIndex(where: { $0.id == sale.id }) {
+            sales[index] = sale
+        } else {
+            sales.append(sale)
+        }
+
+        // ✅ Update customer if ID exists, else add new
+        if let existingIndex = customers.firstIndex(where: { $0.id == sale.customer.id }) {
+            customers[existingIndex] = sale.customer
+        } else {
             customers.append(sale.customer)
         }
+
         saveSales()
         saveCustomers()
     }
+
+
 
     func getAllSales() -> [Sale] {
         return sales
@@ -59,4 +70,9 @@ class LocalSalesRepository: SalesRepository, ObservableObject {
               let decoded = try? JSONDecoder().decode([Customer].self, from: data) else { return }
         customers = decoded
     }
+    func saveAll() {
+        saveSales()
+        saveCustomers()
+    }
+
 }
