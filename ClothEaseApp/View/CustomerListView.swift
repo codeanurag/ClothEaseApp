@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct CustomerListView: View {
-    @StateObject private var viewModel = SalesViewModel()
+    @EnvironmentObject var viewModel: SalesViewModel
     @State private var searchText = ""
 
     var body: some View {

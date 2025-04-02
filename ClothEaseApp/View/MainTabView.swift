@@ -9,6 +9,8 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @StateObject private var viewModel = SalesViewModel()
+
     var body: some View {
         TabView {
             HomeTabView()
@@ -20,16 +22,19 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Sales", systemImage: "chart.bar")
                 }
+                .badge(viewModel.sales.count)
 
             CustomerListView()
                 .tabItem {
                     Label("Customers", systemImage: "person.3")
                 }
+                .badge(viewModel.customers.count)
 
             ProfileView()
                 .tabItem {
                     Label("Profile", systemImage: "gearshape")
                 }
         }
+        .environmentObject(viewModel) // share across tabs
     }
 }
