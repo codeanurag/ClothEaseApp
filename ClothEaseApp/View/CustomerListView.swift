@@ -13,22 +13,24 @@ struct CustomerListView: View {
     @State private var searchText = ""
 
     var body: some View {
-        List {
-            ForEach(filteredCustomers) { customer in
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(customer.name)
-                        .font(.headline)
-                    Text("📞 \(customer.contact)")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                    Text("🛍️ Purchases: \(viewModel.salesForCustomer(customer).count)")
-                        .font(.caption)
+        NavigationStack {
+            List {
+                ForEach(filteredCustomers) { customer in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(customer.name)
+                            .font(.headline)
+                        Text("📞 \(customer.contact)")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                        Text("🛍️ Purchases: \(viewModel.salesForCustomer(customer).count)")
+                            .font(.caption)
+                    }
+                    .padding(.vertical, 4)
                 }
-                .padding(.vertical, 4)
             }
+            .searchable(text: $searchText)
+            .navigationTitle("Customers")
         }
-        .searchable(text: $searchText)
-        .navigationTitle("Customers")
     }
 
     var filteredCustomers: [Customer] {
@@ -39,3 +41,4 @@ struct CustomerListView: View {
         }
     }
 }
+

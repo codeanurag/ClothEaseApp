@@ -13,22 +13,24 @@ struct SalesHistoryView: View {
     @State private var searchText = ""
 
     var body: some View {
-        List {
-            ForEach(filteredSales) { sale in
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Customer: \(sale.customer.name)")
-                        .font(.headline)
-                    Text("Products: \(sale.products.map { $0.name }.joined(separator: ", "))")
-                        .font(.subheadline)
-                    Text("Date: \(formattedDate(sale.timestamp))")
-                        .font(.caption)
-                        .foregroundColor(.gray)
+        NavigationStack {
+            List {
+                ForEach(filteredSales) { sale in
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Customer: \(sale.customer.name)")
+                            .font(.headline)
+                        Text("Products: \(sale.products.map { $0.name }.joined(separator: ", "))")
+                            .font(.subheadline)
+                        Text("Date: \(formattedDate(sale.timestamp))")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
+                    .padding(.vertical, 6)
                 }
-                .padding(.vertical, 6)
             }
+            .searchable(text: $searchText)
+            .navigationTitle("Sales History")
         }
-        .searchable(text: $searchText)
-        .navigationTitle("Sales History")
     }
 
     var filteredSales: [Sale] {
@@ -42,3 +44,4 @@ struct SalesHistoryView: View {
         return formatter.string(from: date)
     }
 }
+
