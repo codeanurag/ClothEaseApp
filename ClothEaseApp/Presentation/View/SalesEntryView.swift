@@ -12,6 +12,7 @@ struct SalesEntryView: View {
     @Environment(\.dismiss) var dismiss
 
     let sizes = ["S", "M", "L", "XL", "XXL", "XXXL"]
+    let productTypes = ["Kurti", "Sharara", "Single Kurti", "Cord Set", "Thali Cover", "Other"]
 
     var body: some View {
         NavigationStack {
@@ -30,9 +31,11 @@ struct SalesEntryView: View {
                     // MARK: Product Cards (Editable)
                     if !viewModel.products.isEmpty {
                         Section(header: Text("Products")) {
-                            ForEach($viewModel.products, id: \.id) { $product in
+                            ForEach(Array(viewModel.products.enumerated()), id: \.element.id) { index, product in
                                 ProductCardView(
-                                    product: $product,
+                                    onDelete: {
+                                        viewModel.products.remove(at: index)
+                                    }, product: $viewModel.products[index],
                                     sizes: sizes,
                                     isEditable: true
                                 )
@@ -43,7 +46,35 @@ struct SalesEntryView: View {
 
                     // MARK: Add New Product Section
                     Section(header: Text("Add Product")) {
-                        TextField("Product Name", text: $viewModel.productName)
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Select Product Type").font(.subheadline)
+
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 10) {
+                                    ForEach(productTypes, id: \.self) { type in
+                                        Button(action: {
+                                            viewModel.selectedProductType = type
+                                        }) {
+                                            Text(type)
+                                                .padding(.horizontal, 12)
+                                                .padding(.vertical, 8)
+                                                .background(viewModel.selectedProductType == type ? Color.blue : Color.gray.opacity(0.2))
+                                                .foregroundColor(viewModel.selectedProductType == type ? .white : .primary)
+                                                .cornerRadius(8)
+                                        }
+                                    }
+                                }
+                            }
+
+                            if viewModel.selectedProductType == "Other" || viewModel.selectedProductType == nil {
+                                TextField("Enter full product name", text: $viewModel.productName)
+                            } else {
+                                TextField("Extra details (optional)", text: $viewModel.productDescription)
+                                    .onChange(of: viewModel.productDescription) { _ in
+                                        viewModel.updateComposedProductName()
+                                    }
+                            }
+                        }
 
                         TextField("Price", text: $viewModel.productPrice)
                             .keyboardType(.decimalPad)
@@ -67,6 +98,9 @@ struct SalesEntryView: View {
                                     }
                                 }
                             }
+                        }
+                        .onChange(of: viewModel.selectedProductType) { _ in
+                            viewModel.updateComposedProductName()
                         }
 
                         Button("Add Product") {

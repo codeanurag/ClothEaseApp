@@ -32,6 +32,12 @@ struct CustomerListView: View {
                             )
                         }
                     }
+                    .onDelete { indexSet in
+                        for index in indexSet {
+                            let customer = viewModel.filteredCustomers[index]
+                            viewModel.deleteCustomer(customer)
+                        }
+                    }
                 }
                 .searchable(text: $viewModel.searchText)
                 .navigationTitle("Customers")

@@ -6,7 +6,7 @@
 //
 import SwiftUI
 
-struct Sale: Identifiable, Codable {
+struct Sale: Identifiable, Codable, Hashable {
     let id: String
     let customer: Customer   // change from customerID to customer
     let products: [Product]

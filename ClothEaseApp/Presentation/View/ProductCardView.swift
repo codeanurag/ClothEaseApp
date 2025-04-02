@@ -9,6 +9,7 @@
 import SwiftUI
 
 struct ProductCardView: View {
+    var onDelete: (() -> Void)? = nil
     @Binding var product: Product
     let sizes: [String]
     let isEditable: Bool
@@ -16,8 +17,18 @@ struct ProductCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             if isEditable {
-                TextField("Product Name", text: $product.name)
-
+                HStack {
+                    TextField("Product Name", text: $product.name)
+                    
+                    Spacer()
+                    
+                    if let onDelete = onDelete {
+                        Button(action: onDelete) {
+                            Image(systemName: "trash")
+                                .foregroundColor(.red)
+                        }
+                    }
+                }
                 TextField("Price", value: $product.price, format: .number)
                     .keyboardType(.decimalPad)
 

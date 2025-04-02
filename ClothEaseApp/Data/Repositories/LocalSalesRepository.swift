@@ -111,4 +111,15 @@ class LocalSalesRepository: SalesRepository, ObservableObject {
         saveCustomers()
     }
 
+    func deleteSale(byId id: String) {
+        sales.removeAll { $0.id == id }
+        saveSales()
+    }
+    func deleteCustomer(byId id: String) {
+        customers.removeAll { $0.id == id }
+        sales.removeAll { $0.customer.id == id } // Optional: remove their sales too
+        saveCustomers()
+        saveSales()
+    }
+
 }

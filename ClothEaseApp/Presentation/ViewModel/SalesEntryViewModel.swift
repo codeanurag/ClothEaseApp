@@ -20,6 +20,8 @@ class SalesEntryViewModel: ObservableObject {
     @Published var productName: String = ""
     @Published var productPrice: String = ""
     @Published var selectedSize: String = "XL"
+    @Published var selectedProductType: String? = nil
+    @Published var productDescription: String = ""
 
     // MARK: - Added Products
     @Published var products: [Product] = []
@@ -30,13 +32,12 @@ class SalesEntryViewModel: ObservableObject {
     private var existingSale: Sale?
     private let addSaleUseCase: AddSaleUseCase
     private let repo: LocalSalesRepository
-    
+
     var canSave: Bool {
         !customerName.trimmingCharacters(in: .whitespaces).isEmpty &&
         customerContact.count == 10 &&
         !products.isEmpty
     }
-
 
     var isEditing: Bool {
         existingSale != nil
@@ -96,6 +97,14 @@ class SalesEntryViewModel: ObservableObject {
         productName = ""
         productPrice = ""
         selectedSize = "XL"
+        selectedProductType = nil
+        productDescription = ""
+    }
+
+    func updateComposedProductName() {
+        if let selected = selectedProductType, selected != "Other" {
+            productName = "\(selected) \(productDescription)".trimmingCharacters(in: .whitespaces)
+        }
     }
 
     // MARK: - Save or Update Sale
@@ -131,5 +140,4 @@ class SalesEntryViewModel: ObservableObject {
         }
     }
 }
-
 

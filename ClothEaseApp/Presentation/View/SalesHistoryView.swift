@@ -10,10 +10,11 @@ import SwiftUI
 struct SalesHistoryView: View {
     @StateObject var viewModel: SalesHistoryViewModel
     @State private var isShowingNewSale = false
+    @State private var selectedSale: Sale? = nil
 
     var body: some View {
-        ZStack {
-            NavigationStack {
+        NavigationStack {
+            ZStack {
                 ScrollView {
                     LazyVStack(spacing: 16) {
                         ForEach(viewModel.filteredSales, id: \.id) { sale in
@@ -24,14 +25,9 @@ struct SalesHistoryView: View {
 
                                     Spacer()
 
-                                    NavigationLink(
-                                        destination: SalesEntryView(
-                                            viewModel: SalesEntryViewModel(
-                                                addSaleUseCase: AddSaleUseCase(repository: viewModel.repository),
-                                                editing: sale
-                                            )
-                                        )
-                                    ) {
+                                    Button {
+                                        selectedSale = sale
+                                    } label: {
                                         Image(systemName: "pencil")
                                             .font(.system(size: 16, weight: .medium))
                                             .foregroundColor(.blue)
@@ -52,27 +48,41 @@ struct SalesHistoryView: View {
                                     .fill(Color(.systemGray6))
                             )
                             .padding(.horizontal)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    viewModel.deleteSale(sale)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
                         }
                     }
                     .padding(.top)
                 }
                 .searchable(text: $viewModel.searchText)
                 .navigationTitle("Sales History")
-                .onAppear {
-                    debugDuplicateIDs()
+                .navigationDestination(item: $selectedSale) { sale in
+                    SalesEntryView(
+                        viewModel: SalesEntryViewModel(
+                            addSaleUseCase: AddSaleUseCase(repository: viewModel.repository),
+                            editing: sale
+                        )
+                    )
                 }
-            }
 
-            // Floating Button Overlay
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    FloatingButton(action: {
-                        isShowingNewSale = true
-                    }, icon: "plus")
-                        .padding(.trailing, 20)
-                        .padding(.bottom, 20)
+                // FAB – Only visible when no screen is pushed or modal shown
+                if selectedSale == nil && !isShowingNewSale {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            FloatingButton(action: {
+                                isShowingNewSale = true
+                            }, icon: "plus")
+                                .padding(.trailing, 20)
+                                .padding(.bottom, 20)
+                        }
+                    }
                 }
             }
         }
@@ -91,17 +101,7 @@ struct SalesHistoryView: View {
         formatter.timeStyle = .short
         return formatter.string(from: date)
     }
-
-    private func debugDuplicateIDs() {
-        let ids = viewModel.filteredSales.map { $0.id }
-        let duplicateIDs = Dictionary(grouping: ids, by: { $0 })
-            .filter { $1.count > 1 }
-            .keys
-
-        if !duplicateIDs.isEmpty {
-            print("⚠️ Duplicate Sale IDs found: \(duplicateIDs)")
-        }
-    }
 }
+
 
 

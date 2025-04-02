@@ -6,7 +6,7 @@
 //
 
 
-struct Customer: Identifiable, Codable {
+struct Customer: Identifiable, Codable, Equatable, Hashable {
     let id: String
     let name: String
     let contact: String

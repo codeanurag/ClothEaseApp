@@ -6,7 +6,7 @@
 //
 
 
-struct Product: Identifiable, Codable, Equatable {
+struct Product: Identifiable, Codable, Equatable, Hashable {
     let id: String
     var name: String
     var price: Double

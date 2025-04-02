@@ -21,5 +21,12 @@ class SalesHistoryViewModel: ObservableObject {
             .receive(on: RunLoop.main)
             .assign(to: &$filteredSales)
     }
+    func deleteSale(_ sale: Sale) {
+        repository.deleteSale(byId: sale.id)
+    }
+    
+    func saleCount(for customer: Customer) -> Int {
+        repository.sales.filter { $0.customer.id == customer.id }.count
+    }
 }
 

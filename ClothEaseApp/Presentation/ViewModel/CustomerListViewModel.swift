@@ -37,5 +37,9 @@ class CustomerListViewModel: ObservableObject {
             $0.contact.localizedCaseInsensitiveContains(searchText)
         }
     }
+    func deleteCustomer(_ customer: Customer) {
+        repository.deleteCustomer(byId: customer.id)
+    }
+
 }
 
