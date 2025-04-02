@@ -11,4 +11,5 @@ struct Product: Identifiable, Codable, Equatable, Hashable {
     var name: String
     var price: Double
     var size: String
+    var costPrice: Double 
 }

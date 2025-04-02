@@ -43,7 +43,7 @@ struct CustomerListView: View {
                 .navigationTitle("Customers")
             }
 
-            // Floating Button Overlay
+            // Floating button
             VStack {
                 Spacer()
                 HStack {
@@ -61,4 +61,3 @@ struct CustomerListView: View {
         }
     }
 }
-

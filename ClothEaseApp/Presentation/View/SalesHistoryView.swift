@@ -60,6 +60,9 @@ struct SalesHistoryView: View {
                     .padding(.top)
                 }
                 .searchable(text: $viewModel.searchText)
+                .onChange(of: viewModel.searchText) { _ in
+                    viewModel.filterSales()
+                }
                 .navigationTitle("Sales History")
                 .navigationDestination(item: $selectedSale) { sale in
                     SalesEntryView(
@@ -70,7 +73,6 @@ struct SalesHistoryView: View {
                     )
                 }
 
-                // FAB – Only visible when no screen is pushed or modal shown
                 if selectedSale == nil && !isShowingNewSale {
                     VStack {
                         Spacer()
@@ -102,6 +104,3 @@ struct SalesHistoryView: View {
         return formatter.string(from: date)
     }
 }
-
-
-
