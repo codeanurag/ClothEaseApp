@@ -10,6 +10,7 @@ import SwiftUI
 
 struct HomeTabView: View {
     let repo: LocalSalesRepository
+    @State private var isShowingNewSale = false
 
     var body: some View {
         NavigationStack {
@@ -20,19 +21,25 @@ struct HomeTabView: View {
                 Spacer()
             }
             .navigationTitle("Home")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink(
-                        destination: SalesEntryView(
-                            viewModel: SalesEntryViewModel(
-                                addSaleUseCase: AddSaleUseCase(repository: repo)
-                            )
-                        )
-                    ) {
-                        Image(systemName: "plus.circle")
-                            .font(.title2)
-                    }
+
+            // Floating Button Overlay
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    FloatingButton(action: {
+                        isShowingNewSale = true
+                    }, icon: "plus")
+                        .padding(.trailing, 20)
+                        .padding(.bottom, 20)
                 }
+            }
+            .sheet(isPresented: $isShowingNewSale) {
+                SalesEntryView(
+                    viewModel: SalesEntryViewModel(
+                        addSaleUseCase: AddSaleUseCase(repository: repo)
+                    )
+                )
             }
         }
     }

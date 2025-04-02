@@ -89,7 +89,7 @@ class LocalSalesRepository: SalesRepository, ObservableObject {
         }
     }
 
-    private func saveCustomers() {
+    func saveCustomers() {
         if let data = try? JSONEncoder().encode(customers) {
             UserDefaults.standard.set(data, forKey: customersKey)
         }

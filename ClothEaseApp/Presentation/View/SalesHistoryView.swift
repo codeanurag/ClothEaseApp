@@ -9,59 +9,79 @@ import SwiftUI
 
 struct SalesHistoryView: View {
     @StateObject var viewModel: SalesHistoryViewModel
+    @State private var isShowingNewSale = false
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                LazyVStack(spacing: 16) {
-                    ForEach(viewModel.filteredSales, id: \.id) { sale in
-                        VStack(alignment: .leading, spacing: 8) {
-                            // Header: Customer name and Edit icon
-                            HStack {
-                                Text(sale.customer.name)
-                                    .font(.headline)
+        ZStack {
+            NavigationStack {
+                ScrollView {
+                    LazyVStack(spacing: 16) {
+                        ForEach(viewModel.filteredSales, id: \.id) { sale in
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text(sale.customer.name)
+                                        .font(.headline)
 
-                                Spacer()
+                                    Spacer()
 
-                                NavigationLink(
-                                    destination: SalesEntryView(
-                                        viewModel: SalesEntryViewModel(
-                                            addSaleUseCase: AddSaleUseCase(repository: viewModel.repository),
-                                            editing: sale
+                                    NavigationLink(
+                                        destination: SalesEntryView(
+                                            viewModel: SalesEntryViewModel(
+                                                addSaleUseCase: AddSaleUseCase(repository: viewModel.repository),
+                                                editing: sale
+                                            )
                                         )
-                                    )
-                                ) {
-                                    Image(systemName: "pencil")
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(.blue)
+                                    ) {
+                                        Image(systemName: "pencil")
+                                            .font(.system(size: 16, weight: .medium))
+                                            .foregroundColor(.blue)
+                                    }
                                 }
+
+                                Text("📦 \(sale.products.map { $0.name }.joined(separator: ", "))")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+
+                                Text("🕒 \(formattedDate(sale.timestamp))")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
                             }
-
-                            // Product names
-                            Text("📦 \(sale.products.map { $0.name }.joined(separator: ", "))")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-
-                            // Timestamp
-                            Text("🕒 \(formattedDate(sale.timestamp))")
-                                .font(.caption)
-                                .foregroundColor(.gray)
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(.systemGray6))
+                            )
+                            .padding(.horizontal)
                         }
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(.systemGray6))
-                        )
-                        .padding(.horizontal)
                     }
+                    .padding(.top)
                 }
-                .padding(.top)
+                .searchable(text: $viewModel.searchText)
+                .navigationTitle("Sales History")
+                .onAppear {
+                    debugDuplicateIDs()
+                }
             }
-            .searchable(text: $viewModel.searchText)
-            .navigationTitle("Sales History")
-            .onAppear {
-                debugDuplicateIDs()
+
+            // Floating Button Overlay
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    FloatingButton(action: {
+                        isShowingNewSale = true
+                    }, icon: "plus")
+                        .padding(.trailing, 20)
+                        .padding(.bottom, 20)
+                }
             }
+        }
+        .sheet(isPresented: $isShowingNewSale) {
+            SalesEntryView(
+                viewModel: SalesEntryViewModel(
+                    addSaleUseCase: AddSaleUseCase(repository: viewModel.repository)
+                )
+            )
         }
     }
 
@@ -83,4 +103,5 @@ struct SalesHistoryView: View {
         }
     }
 }
+
 
