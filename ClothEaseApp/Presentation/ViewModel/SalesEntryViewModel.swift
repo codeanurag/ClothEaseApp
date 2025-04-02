@@ -30,6 +30,13 @@ class SalesEntryViewModel: ObservableObject {
     private var existingSale: Sale?
     private let addSaleUseCase: AddSaleUseCase
     private let repo: LocalSalesRepository
+    
+    var canSave: Bool {
+        !customerName.trimmingCharacters(in: .whitespaces).isEmpty &&
+        customerContact.count == 10 &&
+        !products.isEmpty
+    }
+
 
     var isEditing: Bool {
         existingSale != nil

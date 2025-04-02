@@ -90,7 +90,9 @@ struct SalesEntryView: View {
                 .foregroundColor(.white)
                 .cornerRadius(12)
                 .padding(.horizontal)
-                .padding(.bottom, 8)
+                .padding(.bottom, 16)
+                .disabled(!viewModel.canSave)
+                .opacity(viewModel.canSave ? 1.0 : 0.5)
             }
             .navigationTitle(viewModel.isEditing ? "Edit Sale" : "New Sale")
             .toast(message: viewModel.isEditing ? "Sale Updated" : "Sale Saved",
