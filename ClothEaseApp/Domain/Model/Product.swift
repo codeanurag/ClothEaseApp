@@ -10,6 +10,6 @@ struct Product: Identifiable, Codable, Equatable, Hashable {
     let id: String
     var name: String
     var price: Double
+    var costPrice: Double? = nil
     var size: String
-    var costPrice: Double 
 }

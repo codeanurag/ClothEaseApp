@@ -9,6 +9,8 @@ import Foundation
 
 class SalesEntryViewModel: ObservableObject {
     // MARK: - Customer Fields
+    @Published var productCostPrice: String = ""
+
     @Published var customerContact: String = "" {
         didSet {
             autoPopulateCustomer()
@@ -58,6 +60,7 @@ class SalesEntryViewModel: ObservableObject {
                     id: $0.id.isEmpty ? UUID().uuidString : $0.id,
                     name: $0.name,
                     price: $0.price,
+                    costPrice: $0.costPrice,
                     size: $0.size
                 )
             }
@@ -85,17 +88,22 @@ class SalesEntryViewModel: ObservableObject {
               let price = Double(productPrice),
               price > 0 else { return }
 
+        let cost: Double? = Double(productCostPrice)
+
         let newProduct = Product(
             id: UUID().uuidString,
             name: trimmedName,
             price: price,
+            costPrice: cost, // ✅ optional
             size: selectedSize
         )
 
         products = products + [newProduct]
 
+        // Reset fields
         productName = ""
         productPrice = ""
+        productCostPrice = ""
         selectedSize = "XL"
         selectedProductType = nil
         productDescription = ""

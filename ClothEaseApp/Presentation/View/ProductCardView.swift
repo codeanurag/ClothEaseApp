@@ -19,9 +19,16 @@ struct ProductCardView: View {
             if isEditable {
                 HStack {
                     TextField("Product Name", text: $product.name)
-                    
+
                     Spacer()
-                    
+
+                    if product.costPrice == nil {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.red)
+                            .font(.subheadline)
+                            .help("Missing cost price")
+                    }
+
                     if let onDelete = onDelete {
                         Button(action: onDelete) {
                             Image(systemName: "trash")
@@ -29,6 +36,7 @@ struct ProductCardView: View {
                         }
                     }
                 }
+
                 TextField("Price", value: $product.price, format: .number)
                     .keyboardType(.decimalPad)
 
@@ -51,9 +59,25 @@ struct ProductCardView: View {
                         }
                     }
                 }
+
+                if product.costPrice == nil {
+                    Text("⚠️ Cost price not added")
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
+
             } else {
-                Text(product.name)
-                    .font(.headline)
+                HStack {
+                    Text(product.name)
+                        .font(.headline)
+
+                    if product.costPrice == nil {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.red)
+                            .font(.subheadline)
+                            .help("Missing cost price")
+                    }
+                }
 
                 Text("₹\(product.price, specifier: "%.2f")")
                     .font(.subheadline)
@@ -68,3 +92,4 @@ struct ProductCardView: View {
         .cornerRadius(12)
     }
 }
+

@@ -19,6 +19,7 @@ struct SalesHistoryView: View {
                     LazyVStack(spacing: 16) {
                         ForEach(viewModel.filteredSales, id: \.id) { sale in
                             VStack(alignment: .leading, spacing: 8) {
+                                // Header
                                 HStack {
                                     Text(sale.customer.name)
                                         .font(.headline)
@@ -34,10 +35,19 @@ struct SalesHistoryView: View {
                                     }
                                 }
 
+                                // Product line
                                 Text("📦 \(sale.products.map { $0.name }.joined(separator: ", "))")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
 
+                                // Show warning if any product is missing cost price
+                                if sale.products.contains(where: { $0.costPrice == nil }) {
+                                    Text("⚠ Missing cost price in one or more products")
+                                        .font(.caption)
+                                        .foregroundColor(.red)
+                                }
+
+                                // Date
                                 Text("🕒 \(formattedDate(sale.timestamp))")
                                     .font(.caption)
                                     .foregroundColor(.gray)
@@ -63,6 +73,9 @@ struct SalesHistoryView: View {
                 .onChange(of: viewModel.searchText) { _ in
                     viewModel.filterSales()
                 }
+                .onAppear {
+                    viewModel.filterSales()
+                }
                 .navigationTitle("Sales History")
                 .navigationDestination(item: $selectedSale) { sale in
                     SalesEntryView(
@@ -73,6 +86,7 @@ struct SalesHistoryView: View {
                     )
                 }
 
+                // Floating Button
                 if selectedSale == nil && !isShowingNewSale {
                     VStack {
                         Spacer()

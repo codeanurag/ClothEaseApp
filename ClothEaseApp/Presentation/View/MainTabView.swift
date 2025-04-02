@@ -40,7 +40,7 @@ struct MainTabView: View {
                 .badge(customersBadge > 0 ? "" : nil)
                 .tag(2)
 
-            ProfileView(viewModel: ProfileViewModel(updatePasscodeUseCase: updatePasscodeUseCase))
+            ProfileView(viewModel: ProfileViewModel(updatePasscodeUseCase: updatePasscodeUseCase, repository: repo))
                 .tabItem {
                     Label("Profile", systemImage: "gearshape")
                 }

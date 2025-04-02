@@ -10,10 +10,12 @@ import SwiftUI
 
 struct ProfileView: View {
     @StateObject var viewModel: ProfileViewModel
+    @State private var isShowingExpenseEntry = false
 
     var body: some View {
         NavigationStack {
             Form {
+                // MARK: - Passcode Section
                 Section(header: Text("Change Passcode")) {
                     SecureField("New Passcode", text: $viewModel.newPasscode)
                         .keyboardType(.numberPad)
@@ -32,6 +34,13 @@ struct ProfileView: View {
                         .foregroundColor(.red)
                         .font(.caption)
                 }
+
+                // MARK: - Expense Settings Section
+                Section(header: Text("Expense Settings")) {
+                    Button("Manage Daily Expense") {
+                        isShowingExpenseEntry = true
+                    }
+                }
             }
             .navigationTitle("Profile")
             .alert("Success", isPresented: $viewModel.showSuccess) {
@@ -39,6 +48,10 @@ struct ProfileView: View {
             } message: {
                 Text("Passcode updated successfully.")
             }
+            .sheet(isPresented: $isShowingExpenseEntry) {
+                DailyExpenseEntryView(repository: viewModel.repository)
+            }
         }
     }
 }
+

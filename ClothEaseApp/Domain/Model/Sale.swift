@@ -8,7 +8,7 @@ import SwiftUI
 
 struct Sale: Identifiable, Codable, Hashable {
     let id: String
-    let customer: Customer   // change from customerID to customer
+    let customer: Customer
     let products: [Product]
     let timestamp: Date
 }

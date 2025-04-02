@@ -11,7 +11,7 @@ import Combine
 class LocalSalesRepository: SalesRepository, ObservableObject {
     private let salesKey = "saved_sales"
     private let customersKey = "saved_customers"
-
+    @Published var dailyExpenses: [DailyExpense] = []
     @Published var sales: [Sale] = []
     @Published var customers: [Customer] = []
     init() {
@@ -72,6 +72,17 @@ class LocalSalesRepository: SalesRepository, ObservableObject {
         saveAll()
     }
 
+    func addOrUpdateExpense(for date: Date, amount: Double) {
+        if let index = dailyExpenses.firstIndex(where: { Calendar.current.isDate($0.date, inSameDayAs: date) }) {
+            dailyExpenses[index].amount = amount
+        } else {
+            dailyExpenses.append(DailyExpense(date: date, amount: amount))
+        }
+    }
+
+    func expense(for date: Date) -> Double {
+        dailyExpenses.first(where: { Calendar.current.isDate($0.date, inSameDayAs: date) })?.amount ?? 0
+    }
 
 
 

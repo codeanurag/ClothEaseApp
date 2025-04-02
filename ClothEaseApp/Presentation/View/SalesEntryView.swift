@@ -78,6 +78,10 @@ struct SalesEntryView: View {
 
                         TextField("Price", text: $viewModel.productPrice)
                             .keyboardType(.decimalPad)
+                        TextField("Cost Price (optional)", text: $viewModel.productCostPrice)
+                            .keyboardType(.decimalPad)
+
+
 
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Select Size").font(.subheadline)

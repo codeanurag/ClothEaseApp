@@ -13,10 +13,12 @@ class ProfileViewModel: ObservableObject {
     @Published var confirmPasscode = ""
     @Published var showSuccess = false
     @Published var showError = false
-
+    let repository: LocalSalesRepository
     private let updatePasscodeUseCase: UpdatePasscodeUseCase
 
-    init(updatePasscodeUseCase: UpdatePasscodeUseCase) {
+    init(updatePasscodeUseCase: UpdatePasscodeUseCase,
+         repository: LocalSalesRepository) {
+        self.repository = repository
         self.updatePasscodeUseCase = updatePasscodeUseCase
     }
 
