@@ -4,18 +4,18 @@
 //
 //  Created by Anurag Pandit on 01/04/25.
 //
+import Foundation
 import SwiftUI
 
 class PasscodeViewModel: ObservableObject {
     @Published var input: String = ""
-    @Published var isUnlocked: Bool = false
     @AppStorage("userPasscode") private var storedPasscode: String = "1234"
 
-    func handleInput(_ digit: String) {
+    func handleInput(_ digit: String, onSuccess: @escaping () -> Void) {
         guard input.count < 4 else { return }
         input.append(digit)
         if input.count == 4 {
-            verifyPasscode()
+            verifyPasscode(onSuccess: onSuccess)
         }
     }
 
@@ -24,11 +24,12 @@ class PasscodeViewModel: ObservableObject {
         input.removeLast()
     }
 
-    private func verifyPasscode() {
+    private func verifyPasscode(onSuccess: @escaping () -> Void) {
         if input == storedPasscode {
-            isUnlocked = true
+            onSuccess()
         } else {
             input = ""
         }
     }
 }
+
