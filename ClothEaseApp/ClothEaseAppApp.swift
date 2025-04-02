@@ -11,7 +11,7 @@ import SwiftUI
 struct ClothEaseAppApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            PasscodeView()
         }
     }
 }
