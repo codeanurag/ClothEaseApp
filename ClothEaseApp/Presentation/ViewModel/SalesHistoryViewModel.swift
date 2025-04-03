@@ -4,14 +4,18 @@
 //
 //  Created by Anurag Pandit on 02/04/25.
 //
-
-
 import Foundation
 import Combine
 
 class SalesHistoryViewModel: ObservableObject {
     @Published var searchText: String = ""
     @Published var filteredSales: [Sale] = []
+
+    // 🔍 Filters
+    @Published var dateFrom: Date? = nil
+    @Published var dateTo: Date? = nil
+    @Published var productFilter: String = ""
+    @Published var customerFilter: String = ""
 
     let repository: LocalSalesRepository
     private var cancellables = Set<AnyCancellable>()
@@ -36,16 +40,28 @@ class SalesHistoryViewModel: ObservableObject {
     }
 
     func filterSales() {
-        if searchText.isEmpty {
-            filteredSales = repository.sales
-        } else {
-            let lowercasedQuery = searchText.lowercased()
+        filteredSales = repository.sales.filter { sale in
+            // Search Text (freeform)
+            let query = searchText.lowercased()
+            let matchesSearch = query.isEmpty ||
+                sale.customer.name.lowercased().contains(query) ||
+                sale.products.contains(where: { $0.name.lowercased().contains(query) }) ||
+                formattedDate(sale.timestamp).lowercased().contains(query)
 
-            filteredSales = repository.sales.filter { sale in
-                sale.customer.name.lowercased().contains(lowercasedQuery) ||
-                sale.products.contains(where: { $0.name.lowercased().contains(lowercasedQuery) }) ||
-                formattedDate(sale.timestamp).lowercased().contains(lowercasedQuery)
-            }
+            // Date filter
+            let matchesDate = (dateFrom == nil || sale.timestamp >= dateFrom!) &&
+                              (dateTo == nil || sale.timestamp <= dateTo!)
+
+            // Customer filter
+            let matchesCustomer = customerFilter.isEmpty ||
+                sale.customer.name.localizedCaseInsensitiveContains(customerFilter) ||
+                sale.customer.contact.contains(customerFilter)
+
+            // Product filter
+            let matchesProduct = productFilter.isEmpty ||
+                sale.products.contains { $0.name.localizedCaseInsensitiveContains(productFilter) }
+
+            return matchesSearch && matchesDate && matchesCustomer && matchesProduct
         }
     }
 
@@ -56,4 +72,5 @@ class SalesHistoryViewModel: ObservableObject {
         return formatter.string(from: date)
     }
 }
+
 
