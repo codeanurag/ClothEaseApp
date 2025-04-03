@@ -4,8 +4,6 @@
 //
 //  Created by Anurag Pandit on 02/04/25.
 //
-
-
 import SwiftUI
 
 struct ProductCardView: View {
@@ -13,6 +11,8 @@ struct ProductCardView: View {
     @Binding var product: Product
     let sizes: [String]
     let isEditable: Bool
+
+    @State private var tempCostPrice: String = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -39,6 +39,16 @@ struct ProductCardView: View {
 
                 TextField("Price", value: $product.price, format: .number)
                     .keyboardType(.decimalPad)
+
+                TextField("Cost Price (optional)", text: $tempCostPrice)
+                    .keyboardType(.decimalPad)
+                    .onChange(of: tempCostPrice) { newValue in
+                        if let value = Double(newValue), value > 0 {
+                            product.costPrice = value
+                        } else {
+                            product.costPrice = nil
+                        }
+                    }
 
                 Text("Size")
                     .font(.subheadline)
@@ -86,6 +96,9 @@ struct ProductCardView: View {
                     .font(.caption)
                     .foregroundColor(.gray)
             }
+        }
+        .onAppear {
+            tempCostPrice = product.costPrice != nil ? String(format: "%.0f", product.costPrice!) : ""
         }
         .padding()
         .background(Color(.systemGray6))

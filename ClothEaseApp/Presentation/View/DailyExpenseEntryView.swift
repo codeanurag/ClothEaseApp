@@ -13,6 +13,14 @@ struct DailyExpenseEntryView: View {
     @State private var expenseAmount: String = ""
     @State private var note: String = ""
     @State private var selectedDate: Date = Date()
+    @State private var appliedFilterDate: Date = Date()
+    @State private var filterMode: FilterMode = .all
+
+    enum FilterMode: String, CaseIterable, Identifiable {
+        case all = "All"
+        case date = "Date"
+        var id: String { rawValue }
+    }
 
     var body: some View {
         NavigationStack {
@@ -39,31 +47,64 @@ struct DailyExpenseEntryView: View {
                     .disabled(!isInputValid)
                 }
 
-                // MARK: - Existing Expenses Section
-                Section(header: Text("Expenses on \(formatted(date: selectedDate))")) {
-                    let expenses = repository.getExpenses(for: selectedDate)
+                // MARK: - Filter Section
+                Section {
+                    Picker("Filter", selection: $filterMode) {
+                        ForEach(FilterMode.allCases) { mode in
+                            Text(mode.rawValue).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
 
-                    if expenses.isEmpty {
+                    if filterMode == .date {
+                        DatePicker("Select Date", selection: $selectedDate, displayedComponents: .date)
+
+                        Button("Apply Date Filter") {
+                            appliedFilterDate = selectedDate
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                }
+
+                // MARK: - Expenses Display Section
+                Section(header: Text("Expenses")) {
+                    let displayExpenses: [DailyExpense] = {
+                        switch filterMode {
+                        case .all:
+                            return repository.dailyExpenses.sorted(by: { $0.date > $1.date })
+                        case .date:
+                            return repository.dailyExpenses.filter {
+                                Calendar.current.isDate($0.date, inSameDayAs: appliedFilterDate)
+                            }.sorted(by: { $0.date > $1.date })
+                        }
+                    }()
+
+                    if displayExpenses.isEmpty {
                         Text("No expenses recorded.")
                             .foregroundColor(.secondary)
                     } else {
-                        ForEach(expenses) { expense in
-                            HStack {
-                                Text(expense.note)
-                                Spacer()
-                                Text("₹\(expense.amount, specifier: "%.2f")")
-                            }
-                        }
-                        .onDelete { indexSet in
-                            deleteExpenses(at: indexSet)
-                        }
+                        ForEach(displayExpenses) { day in
+                            Section(header: Text(formatted(date: day.date))) {
+                                ForEach(Array(day.entries.enumerated()), id: \.element.id) { entryIndex, entry in
+                                    HStack {
+                                        Text(entry.note)
+                                        Spacer()
+                                        Text("₹\(entry.amount, specifier: "%.2f")")
+                                    }
+                                }
+                                .onDelete { indexSet in
+                                    deleteExpenses(for: day.date, at: indexSet)
+                                }
 
-                        HStack {
-                            Text("Total")
-                                .fontWeight(.bold)
-                            Spacer()
-                            Text("₹\(repository.expense(for: selectedDate), specifier: "%.2f")")
-                                .fontWeight(.bold)
+                                HStack {
+                                    Text("Total")
+                                        .fontWeight(.bold)
+                                    Spacer()
+                                    let total = day.entries.reduce(0) { $0 + $1.amount }
+                                    Text("₹\(total, specifier: "%.2f")")
+                                        .fontWeight(.bold)
+                                }
+                            }
                         }
                     }
                 }
@@ -87,16 +128,17 @@ struct DailyExpenseEntryView: View {
         note = ""
     }
 
-    private func deleteExpenses(at offsets: IndexSet) {
+    private func deleteExpenses(for date: Date, at offsets: IndexSet) {
         if let index = repository.dailyExpenses.firstIndex(where: {
-            Calendar.current.isDate($0.date, inSameDayAs: selectedDate)
+            Calendar.current.isDate($0.date, inSameDayAs: date)
         }) {
             repository.dailyExpenses[index].entries.remove(atOffsets: offsets)
 
-            // Remove the entire date if no entries left
             if repository.dailyExpenses[index].entries.isEmpty {
                 repository.dailyExpenses.remove(at: index)
             }
+
+            repository.saveAll()
         }
     }
 
@@ -106,5 +148,6 @@ struct DailyExpenseEntryView: View {
         return formatter.string(from: date)
     }
 }
+
 
 

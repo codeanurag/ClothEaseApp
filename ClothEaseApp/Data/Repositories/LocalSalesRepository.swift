@@ -5,36 +5,37 @@
 //  Created by Anurag Pandit on 02/04/25.
 //
 
-
 import Foundation
 import Combine
+
 class LocalSalesRepository: SalesRepository, ObservableObject {
     private let salesKey = "saved_sales"
     private let customersKey = "saved_customers"
+    private let expensesKey = "saved_expenses" // ✅ NEW
+
     @Published var dailyExpenses: [DailyExpense] = []
     @Published var sales: [Sale] = []
     @Published var customers: [Customer] = []
+
     init() {
         loadSales()
         loadCustomers()
+        loadExpenses() // ✅ Load saved expenses on startup
     }
 
     func addSale(_ sale: Sale) {
-        // 1. Add or replace the sale
         if let index = sales.firstIndex(where: { $0.id == sale.id }) {
             sales[index] = sale
         } else {
             sales.append(sale)
         }
-        
-        // 2. Update or add customer in customer list
+
         if let customerIndex = customers.firstIndex(where: { $0.id == sale.customer.id }) {
             customers[customerIndex] = sale.customer
         } else {
             customers.append(sale.customer)
         }
-        
-        // 3. ✅ Update the customer info in all other sales with same customer ID
+
         for i in sales.indices {
             if sales[i].customer.id == sale.customer.id {
                 sales[i] = Sale(
@@ -45,51 +46,50 @@ class LocalSalesRepository: SalesRepository, ObservableObject {
                 )
             }
         }
-        
+
         saveSales()
         saveCustomers()
     }
 
     func updateCustomerEverywhere(updatedCustomer: Customer) {
-        // 1. Update in customer list
         if let index = customers.firstIndex(where: { $0.id == updatedCustomer.id }) {
             customers[index] = updatedCustomer
         }
-        
-        // 2. Update in sales list
+
         for i in sales.indices {
             if sales[i].customer.id == updatedCustomer.id {
-                let updatedSale = Sale(
+                sales[i] = Sale(
                     id: sales[i].id,
                     customer: updatedCustomer,
                     products: sales[i].products,
                     timestamp: sales[i].timestamp
                 )
-                sales[i] = updatedSale
             }
         }
-        
+
         saveAll()
     }
 
+    // ✅ New method to add expense with persistence
     func addExpense(for date: Date, amount: Double, note: String) {
         let entry = ExpenseEntry(amount: amount, note: note)
-        
+
         if let index = dailyExpenses.firstIndex(where: { Calendar.current.isDate($0.date, inSameDayAs: date) }) {
             dailyExpenses[index].entries.append(entry)
         } else {
-            let newExpense = DailyExpense(date: date, entries: [entry])
-            dailyExpenses.append(newExpense)
+            dailyExpenses.append(DailyExpense(date: date, entries: [entry]))
         }
+
+        saveExpenses()
     }
 
-
     func expense(for date: Date) -> Double {
-        return dailyExpenses
+        dailyExpenses
             .first(where: { Calendar.current.isDate($0.date, inSameDayAs: date) })?
             .entries
             .reduce(0) { $0 + $1.amount } ?? 0
     }
+
     func getExpenses(for date: Date) -> [ExpenseEntry] {
         dailyExpenses
             .first(where: { Calendar.current.isDate($0.date, inSameDayAs: date) })?
@@ -116,6 +116,20 @@ class LocalSalesRepository: SalesRepository, ObservableObject {
         }
     }
 
+    // ✅ NEW: Save expenses to UserDefaults
+    private func saveExpenses() {
+        if let data = try? JSONEncoder().encode(dailyExpenses) {
+            UserDefaults.standard.set(data, forKey: expensesKey)
+        }
+    }
+
+    // ✅ NEW: Load saved expenses
+    private func loadExpenses() {
+        guard let data = UserDefaults.standard.data(forKey: expensesKey),
+              let decoded = try? JSONDecoder().decode([DailyExpense].self, from: data) else { return }
+        dailyExpenses = decoded
+    }
+
     private func loadSales() {
         guard let data = UserDefaults.standard.data(forKey: salesKey),
               let decoded = try? JSONDecoder().decode([Sale].self, from: data) else { return }
@@ -127,20 +141,23 @@ class LocalSalesRepository: SalesRepository, ObservableObject {
               let decoded = try? JSONDecoder().decode([Customer].self, from: data) else { return }
         customers = decoded
     }
+
     func saveAll() {
         saveSales()
         saveCustomers()
+        saveExpenses()
     }
 
     func deleteSale(byId id: String) {
         sales.removeAll { $0.id == id }
         saveSales()
     }
+
     func deleteCustomer(byId id: String) {
         customers.removeAll { $0.id == id }
-        sales.removeAll { $0.customer.id == id } // Optional: remove their sales too
+        sales.removeAll { $0.customer.id == id }
         saveCustomers()
         saveSales()
     }
-
 }
+
