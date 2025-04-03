@@ -13,6 +13,10 @@ struct HomeTabView: View {
     @State private var isShowingNewSale = false
     @StateObject private var viewModel: HomeTabViewModel
 
+    @State private var selectedDate: Date? = nil
+    @State private var showingDetail = false
+    @State private var detailType: DetailType = .profit
+
     init(repo: LocalSalesRepository) {
         self.repo = repo
         _viewModel = StateObject(wrappedValue: HomeTabViewModel(repository: repo))
@@ -22,6 +26,17 @@ struct HomeTabView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
+
+                    // MARK: - Grouping Toggle
+                    Section {
+                        Picker("View Mode", selection: $viewModel.groupingMode) {
+                            ForEach(GroupingMode.allCases) { mode in
+                                Text(mode.rawValue).tag(mode)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .padding(.horizontal)
+                    }
 
                     // MARK: - Profit Chart Section
                     if !viewModel.dailyData.isEmpty {
@@ -59,6 +74,11 @@ struct HomeTabView: View {
                                         .padding()
                                         .background(Color(.systemGray6))
                                         .cornerRadius(12)
+                                        .onTapGesture {
+                                            selectedDate = day.date
+                                            detailType = .profit
+                                            showingDetail = true
+                                        }
                                     }
                                 }
                                 .padding(.horizontal)
@@ -96,12 +116,17 @@ struct HomeTabView: View {
                                                 .font(.subheadline)
                                                 .foregroundColor(.secondary)
 
-                                            Text("🧾 \(item.entries) entr\(item.entries > 1 ? "ies" : "y")")
+                                            Text("🧾 \(item.entries) entry\(item.entries > 1 ? "ies" : "y")")
                                             Text("💸 ₹\(Int(item.total))")
                                         }
                                         .padding()
                                         .background(Color(.systemGray6))
                                         .cornerRadius(12)
+                                        .onTapGesture {
+                                            selectedDate = item.date
+                                            detailType = .expense
+                                            showingDetail = true
+                                        }
                                     }
                                 }
                                 .padding(.horizontal)
@@ -112,6 +137,15 @@ struct HomeTabView: View {
                 .padding(.top)
             }
             .navigationTitle("Home")
+            .sheet(isPresented: $showingDetail) {
+                if let selected = selectedDate {
+                    ExpenseProfitDetailView(
+                        date: selected,
+                        repo: repo,
+                        type: detailType
+                    )
+                }
+            }
         }
         .sheet(isPresented: $isShowingNewSale) {
             SalesEntryView(
@@ -135,6 +169,3 @@ struct HomeTabView: View {
         )
     }
 }
-
-
-
