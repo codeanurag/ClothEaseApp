@@ -9,105 +9,86 @@ import SwiftUI
 
 struct SalesHistoryView: View {
     @StateObject var viewModel: SalesHistoryViewModel
-    @State private var isShowingNewSale = false
-    @State private var selectedSale: Sale? = nil
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        ForEach(viewModel.filteredSales, id: \.id) { sale in
-                            VStack(alignment: .leading, spacing: 8) {
-                                // Header
-                                HStack {
+            List {
+                if viewModel.filteredSales.isEmpty {
+                    Text("No sales found.")
+                        .foregroundColor(.secondary)
+                } else {
+                    ForEach(viewModel.filteredSales, id: \.id) { sale in
+                        VStack(alignment: .leading, spacing: 10) {
+                            // MARK: - Header
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
                                     Text(sale.customer.name)
                                         .font(.headline)
 
-                                    Spacer()
+                                    Text(sale.customer.contact)
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
 
-                                    Button {
-                                        selectedSale = sale
-                                    } label: {
-                                        Image(systemName: "pencil")
-                                            .font(.system(size: 16, weight: .medium))
-                                            .foregroundColor(.blue)
-                                    }
-                                }
-
-                                // Product line
-                                Text("📦 \(sale.products.map { $0.name }.joined(separator: ", "))")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-
-                                // Show warning if any product is missing cost price
-                                if sale.products.contains(where: { $0.costPrice == nil }) {
-                                    Text("⚠ Missing cost price in one or more products")
+                                    Text(formattedDate(sale.timestamp))
                                         .font(.caption)
-                                        .foregroundColor(.red)
+                                        .foregroundColor(.gray)
                                 }
 
-                                // Date
-                                Text("🕒 \(formattedDate(sale.timestamp))")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color(.systemGray6))
-                            )
-                            .padding(.horizontal)
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button(role: .destructive) {
+                                Spacer()
+
+                                Button {
                                     viewModel.deleteSale(sale)
                                 } label: {
-                                    Label("Delete", systemImage: "trash")
+                                    Image(systemName: "trash")
+                                        .foregroundColor(.red)
                                 }
                             }
-                        }
-                    }
-                    .padding(.top)
-                }
-                .searchable(text: $viewModel.searchText)
-                .onChange(of: viewModel.searchText) { _ in
-                    viewModel.filterSales()
-                }
-                .onAppear {
-                    viewModel.filterSales()
-                }
-                .navigationTitle("Sales History")
-                .navigationDestination(item: $selectedSale) { sale in
-                    SalesEntryView(
-                        viewModel: SalesEntryViewModel(
-                            addSaleUseCase: AddSaleUseCase(repository: viewModel.repository),
-                            editing: sale
-                        )
-                    )
-                }
 
-                // Floating Button
-                if selectedSale == nil && !isShowingNewSale {
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            FloatingButton(action: {
-                                isShowingNewSale = true
-                            }, icon: "plus")
-                                .padding(.trailing, 20)
-                                .padding(.bottom, 20)
+                            Divider()
+
+                            // MARK: - Product List
+                            ForEach(sale.products, id: \.id) { product in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(product.name)
+                                        .fontWeight(.medium)
+
+                                    HStack {
+                                        Text("Size: \(product.size)")
+                                        Spacer()
+                                        Text("₹\(Int(product.price))")
+                                        if let cost = product.costPrice {
+                                            Text("(Cost: ₹\(Int(cost)))")
+                                                .foregroundColor(.secondary)
+                                        }
+                                    }
+                                    .font(.caption)
+                                }
+                                .padding(.vertical, 2)
+                            }
+
+                            Divider()
+
+                            // MARK: - Summary
+                            let revenue = sale.products.reduce(0) { $0 + $1.price }
+                            let cost = sale.products.reduce(0) { $0 + ($1.costPrice ?? 0) }
+                            let profit = revenue - cost
+
+                            HStack {
+                                Text("💰 Revenue: ₹\(Int(revenue))")
+                                Spacer()
+                                Text("💸 Cost: ₹\(Int(cost))")
+                                Spacer()
+                                Text("📊 Profit: ₹\(Int(profit))")
+                                    .foregroundColor(profit >= 0 ? .green : .red)
+                            }
+                            .font(.subheadline)
                         }
+                        .padding(.vertical, 8)
                     }
                 }
             }
-        }
-        .sheet(isPresented: $isShowingNewSale) {
-            SalesEntryView(
-                viewModel: SalesEntryViewModel(
-                    addSaleUseCase: AddSaleUseCase(repository: viewModel.repository)
-                )
-            )
+            .searchable(text: $viewModel.searchText)
+            .navigationTitle("Sales History")
         }
     }
 
@@ -118,3 +99,4 @@ struct SalesHistoryView: View {
         return formatter.string(from: date)
     }
 }
+
