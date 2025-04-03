@@ -6,9 +6,16 @@
 //
 
 import Foundation
-struct DailyExpense: Identifiable, Codable, Equatable {
-    var id: UUID = UUID()
+struct DailyExpense: Identifiable, Codable, Hashable {
+    var id = UUID()
     var date: Date
-    var amount: Double
+    var entries: [ExpenseEntry]
 }
+
+struct ExpenseEntry: Identifiable, Codable, Hashable {
+    var id = UUID()
+    var amount: Double
+    var note: String
+}
+
 

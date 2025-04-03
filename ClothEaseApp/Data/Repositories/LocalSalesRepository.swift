@@ -72,19 +72,29 @@ class LocalSalesRepository: SalesRepository, ObservableObject {
         saveAll()
     }
 
-    func addOrUpdateExpense(for date: Date, amount: Double) {
+    func addExpense(for date: Date, amount: Double, note: String) {
+        let entry = ExpenseEntry(amount: amount, note: note)
+        
         if let index = dailyExpenses.firstIndex(where: { Calendar.current.isDate($0.date, inSameDayAs: date) }) {
-            dailyExpenses[index].amount = amount
+            dailyExpenses[index].entries.append(entry)
         } else {
-            dailyExpenses.append(DailyExpense(date: date, amount: amount))
+            let newExpense = DailyExpense(date: date, entries: [entry])
+            dailyExpenses.append(newExpense)
         }
     }
 
+
     func expense(for date: Date) -> Double {
-        dailyExpenses.first(where: { Calendar.current.isDate($0.date, inSameDayAs: date) })?.amount ?? 0
+        return dailyExpenses
+            .first(where: { Calendar.current.isDate($0.date, inSameDayAs: date) })?
+            .entries
+            .reduce(0) { $0 + $1.amount } ?? 0
     }
-
-
+    func getExpenses(for date: Date) -> [ExpenseEntry] {
+        dailyExpenses
+            .first(where: { Calendar.current.isDate($0.date, inSameDayAs: date) })?
+            .entries ?? []
+    }
 
     func getAllSales() -> [Sale] {
         return sales
