@@ -7,6 +7,7 @@
 
 import Charts
 import SwiftUI
+
 struct HomeTabView: View {
     let repo: LocalSalesRepository
     @State private var isShowingNewSale = false
@@ -20,48 +21,91 @@ struct HomeTabView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    if viewModel.dailyData.isEmpty {
-                        Text("No sales yet.")
-                            .foregroundColor(.gray)
-                            .padding()
-                    } else {
-                        Text("Profit Overview")
-                            .font(.title2)
-                            .fontWeight(.semibold)
+                VStack(alignment: .leading, spacing: 24) {
+
+                    // MARK: - Profit Chart Section
+                    if !viewModel.dailyData.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("📈 Profit Overview")
+                                .font(.title2)
+                                .fontWeight(.semibold)
+                                .padding(.horizontal)
+
+                            Chart {
+                                ForEach(viewModel.dailyData) { day in
+                                    BarMark(
+                                        x: .value("Date", day.date, unit: .day),
+                                        y: .value("Profit", day.profit)
+                                    )
+                                    .foregroundStyle(day.profit >= 0 ? .green : .red)
+                                }
+                            }
+                            .frame(height: 200)
                             .padding(.horizontal)
 
-                        Chart {
-                            ForEach(viewModel.dailyData) { day in
-                                BarMark(
-                                    x: .value("Date", day.date, unit: .day),
-                                    y: .value("Profit", day.profit)
-                                )
-                                .foregroundStyle(day.profit >= 0 ? .green : .red)
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 12) {
+                                    ForEach(viewModel.dailyData.sorted { $0.date > $1.date }) { day in
+                                        VStack(alignment: .leading, spacing: 6) {
+                                            Text(viewModel.shortDate(day.date))
+                                                .font(.subheadline)
+                                                .foregroundColor(.secondary)
+
+                                            Text("🧾 \(day.itemsSold) sold")
+                                            Text("💰 ₹\(Int(day.revenue))")
+                                            Text("📊 ₹\(Int(day.profit))")
+                                                .foregroundColor(day.profit >= 0 ? .green : .red)
+                                        }
+                                        .padding()
+                                        .background(Color(.systemGray6))
+                                        .cornerRadius(12)
+                                    }
+                                }
+                                .padding(.horizontal)
                             }
                         }
-                        .frame(height: 200)
-                        .padding(.horizontal)
+                    }
 
-                        Divider()
-                            .padding(.horizontal)
+                    Divider()
 
-                        if let today = viewModel.todaySummary {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("🗓 Today")
-                                    .font(.headline)
+                    // MARK: - Expense Chart Section
+                    if !viewModel.expenseData.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("💸 Expense Overview")
+                                .font(.title2)
+                                .fontWeight(.semibold)
+                                .padding(.horizontal)
 
-                                Text("🧾 Items Sold: \(today.itemsSold)")
-                                Text("💰 Revenue: ₹\(Int(today.revenue))")
-                                Text("💸 Expenses: ₹\(Int(today.expense))")
-                                Text("📊 Profit: ₹\(Int(today.profit))")
-                                    .foregroundColor(today.profit >= 0 ? .green : .red)
+                            Chart {
+                                ForEach(viewModel.expenseData) { item in
+                                    BarMark(
+                                        x: .value("Date", item.date, unit: .day),
+                                        y: .value("Amount", item.total)
+                                    )
+                                    .foregroundStyle(.blue)
+                                }
                             }
-                            .padding()
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(12)
+                            .frame(height: 200)
                             .padding(.horizontal)
+
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 12) {
+                                    ForEach(viewModel.expenseData.sorted { $0.date > $1.date }) { item in
+                                        VStack(alignment: .leading, spacing: 6) {
+                                            Text(viewModel.shortDate(item.date))
+                                                .font(.subheadline)
+                                                .foregroundColor(.secondary)
+
+                                            Text("🧾 \(item.entries) entr\(item.entries > 1 ? "ies" : "y")")
+                                            Text("💸 ₹\(Int(item.total))")
+                                        }
+                                        .padding()
+                                        .background(Color(.systemGray6))
+                                        .cornerRadius(12)
+                                    }
+                                }
+                                .padding(.horizontal)
+                            }
                         }
                     }
                 }
@@ -91,5 +135,6 @@ struct HomeTabView: View {
         )
     }
 }
+
 
 
